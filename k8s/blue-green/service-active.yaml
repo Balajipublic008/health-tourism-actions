@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: medical-tourism-service
+  labels:
+    app: medical-tourism
+spec:
+  type: LoadBalancer # Provisions a GCP External Network Load Balancer
+  selector:
+    app: medical-tourism
+    # THIS IS THE SWITCH: Change this to 'green' to route traffic to the green deployment
+    color: blue 
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

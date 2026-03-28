@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medical-tourism-app
+  labels:
+    app: medical-tourism
+spec:
+  replicas: 2 # Number of pods to run for high availability
+  selector:
+    matchLabels:
+      app: medical-tourism
+  template:
+    metadata:
+      labels:
+        app: medical-tourism
+    spec:
+      containers:
+      - name: medical-tourism-web
+        # Replace this with your actual Docker image registry path
+        # e.g., docker.io/yourusername/medical-tourism-app:latest
+        image: medical-tourism-app:latest 
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
