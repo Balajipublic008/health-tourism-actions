@@ -1,15 +1,14 @@
 name: Build and Deploy to GKE
 
 on:
-  
+  push:
+    # branches:
+    #   - main
+  workflow_dispatch:
+
 permissions:
   contents: read
   id-token: write   # REQUIRED for Workload Identity Federation
-
-push:
-  # branches:
-  #   - main  # Uncomment this to trigger on pushes to main branch   
-  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -40,17 +39,29 @@ jobs:
         workload_identity_provider: projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions
         service_account: github-actions@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
+    # 🔍 DEBUG (REMOVE AFTER TEST)
+    - name: Debug OIDC Token
+      run: |
+        echo "TOKEN: $ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+        echo "URL: $ACTIONS_ID_TOKEN_REQUEST_URL"
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
     - name: Terraform Init
       run: terraform init
 
+    - name: Terraform validate 
+      run: terraform validate
+
+    - name: Terraform plan
+      run: terraform plan -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
+      
     - name: Terraform Apply
       run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
 
   setup-build-publish-deploy:
-    name: Setup, Build, Publish, and Deploy
+    name: Build, Push, and Deploy to GKE
     needs: terraform-deploy
     runs-on: ubuntu-latest
     environment: dev
@@ -80,18 +91,18 @@ jobs:
           --tag "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR" \
           .
 
-    - name: Publish Docker Image to GCR
+    - name: Push Docker Image
       run: |
         docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR"
 
-    - name: Set up GKE credentials
+    - name: Get GKE Credentials
       uses: google-github-actions/get-gke-credentials@v2
       with:
         cluster_name: ${{ env.GKE_CLUSTER }}
         location: ${{ env.GKE_ZONE }}
 
-    - name: Deploy Target Color (Green)
+    - name: Deploy Green
       run: |
         sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/blue-green/deployment-$TARGET_COLOR.yaml
         kubectl apply -f k8s/blue-green/deployment-$TARGET_COLOR.yaml
@@ -99,8 +110,9 @@ jobs:
 
     - name: Switch Traffic
       run: |
-        kubectl patch service medical-tourism-service -p "{\"spec\":{\"selector\":{\"color\":\"$TARGET_COLOR\"}}}"
+        kubectl patch service medical-tourism-service \
+        -p "{\"spec\":{\"selector\":{\"color\":\"$TARGET_COLOR\"}}}"
 
-    - name: Scale down Old Deployment
+    - name: Scale Down Old Deployment
       run: |
         kubectl scale deployment medical-tourism-$ACTIVE_COLOR --replicas=0
