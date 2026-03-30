@@ -7,7 +7,7 @@
       workflow_dispatch:
 
     env:
-      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
       GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
       GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
       IMAGE: medical-tourism-app
@@ -31,7 +31,7 @@
           name: 'Authenticate to Google Cloud'
           uses: 'google-github-actions/auth@v2'
           with:
-            project_id: ${{ secrets.GCP_PROJECT_ID }}
+            project_id: ${{ vars.GCP_PROJECT_ID }}
             workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
 
 
@@ -42,7 +42,7 @@
           run: terraform init
 
         - name: Terraform Apply
-          run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
+          run: terraform apply -auto-approve -var="project_id=${{ vars.GCP_PROJECT_ID }}"
 
       setup-build-publish-deploy:
         name: Setup, Build, Publish, and Deploy
@@ -59,9 +59,9 @@
           name: 'Authenticate to Google Cloud'
           uses: 'google-github-actions/auth@v2'
           with:
-            project_id: ${{ secrets.GCP_PROJECT_ID }}
+            project_id: ${{ vars.GCP_PROJECT_ID }}
             workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
-            
+
         - name: Set up Cloud SDK
           uses: google-github-actions/setup-gcloud@v2
 
