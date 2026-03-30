@@ -1,12 +1,15 @@
 name: Build and Deploy to GKE
 
 on:
-  push:
-  workflow_dispatch:
-
+  
 permissions:
   contents: read
   id-token: write   # REQUIRED for Workload Identity Federation
+
+push:
+  # branches:
+  #   - main  # Uncomment this to trigger on pushes to main branch   
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
