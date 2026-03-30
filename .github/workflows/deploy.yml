@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-
+    # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GKE_CLUSTER: medical-tourism-cluster    # Update with your exact GKE cluster name
