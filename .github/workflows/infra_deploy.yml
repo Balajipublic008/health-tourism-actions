@@ -2,16 +2,16 @@ name: Build and Deploy to GKE
 
 on:
   push:
-  #  branches:
-  #   - main
+  workflow_dispatch:
 
-# Allows you to run this workflow manually from the Actions tab
-    workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write   # REQUIRED for Workload Identity Federation
 
 env:
-  PROJECT_ID: ${secrets.GCP_PROJECT_ID}
-  GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
-  GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: med-tour-cluster
+  GKE_ZONE: us-central1-a
   IMAGE: medical-tourism-app
   TARGET_COLOR: green
   ACTIVE_COLOR: blue
@@ -29,12 +29,13 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v3'
+    - id: auth
+      name: Authenticate to Google Cloud (WIF)
+      uses: google-github-actions/auth@v3
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
+        workload_identity_provider: projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions
+        service_account: github-actions@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -48,37 +49,36 @@ jobs:
   setup-build-publish-deploy:
     name: Setup, Build, Publish, and Deploy
     needs: terraform-deploy
-    runs-on: ubuntu-latest # This uses the free GitHub-hosted runners
+    runs-on: ubuntu-latest
     environment: dev
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # Authenticate to Google Cloud using a Service Account JSON key stored in GitHub Secrets
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v3'
+    - id: auth
+      name: Authenticate to Google Cloud (WIF)
+      uses: google-github-actions/auth@v3
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
+        workload_identity_provider: projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions
+        service_account: github-actions@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
 
     - name: Configure Docker for GCR
-      run: |-
-        gcloud auth configure-docker gcr.io
+      run: gcloud auth configure-docker gcr.io
 
     - name: Build Docker Image
-      run: |-
+      run: |
         docker build \
           --tag "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
           --tag "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR" \
           .
 
     - name: Publish Docker Image to GCR
-      run: |-
+      run: |
         docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR"
 
@@ -88,23 +88,16 @@ jobs:
         cluster_name: ${{ env.GKE_CLUSTER }}
         location: ${{ env.GKE_ZONE }}
 
-    - name: Deploy Target Color (Green) to GKE
-      run: |-
-        # Replace the image placeholder in the manifest with the newly built image
+    - name: Deploy Target Color (Green)
+      run: |
         sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/blue-green/deployment-$TARGET_COLOR.yaml
-        
-        # Apply the deployment
         kubectl apply -f k8s/blue-green/deployment-$TARGET_COLOR.yaml
-        
-        # Wait for the rollout to complete successfully
         kubectl rollout status deployment/medical-tourism-$TARGET_COLOR
 
-    - name: Switch Traffic to Target Color
-      run: |-
-        # Patch the service selector to route traffic to the new Green deployment
+    - name: Switch Traffic
+      run: |
         kubectl patch service medical-tourism-service -p "{\"spec\":{\"selector\":{\"color\":\"$TARGET_COLOR\"}}}"
 
-    - name: Scale down Old Color (Blue)
-      run: |-
-        # Scale down the old deployment to 0 to save resources on the GCP Free Tier
+    - name: Scale down Old Deployment
+      run: |
         kubectl scale deployment medical-tourism-$ACTIVE_COLOR --replicas=0
