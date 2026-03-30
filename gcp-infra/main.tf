@@ -14,7 +14,7 @@ terraform {
 variable "project_id" {
   description = "The GCP Project ID"
   type        = string
-  default     = "${{ vars.GCP_PROJECT_ID }}"                        # "project-b0bf8b45-36f1-4568-966"
+  default     = "project-b0bf8b45-36f1-4568-966"
 }
 
 # Free tier eligible regions: us-west1, us-central1, us-east1
