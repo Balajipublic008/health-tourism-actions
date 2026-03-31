@@ -2,7 +2,7 @@ name: Infra Pipeline
 
 on:
   pull_request:
-  push:
+   push:
     branches:
       - main
   workflow_dispatch:

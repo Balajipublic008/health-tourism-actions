@@ -11,7 +11,7 @@ on:
         type: string
       action:
         required: true
-        type: string   # plan | apply | destroy
+        type: string      # plan | apply | destroy
 
 jobs:
   terraform:
