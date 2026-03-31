@@ -1,3 +1,7 @@
+# Step 0 
+gcloud iam service-accounts create github-actions \
+  --display-name="GitHub Actions Service Account"
+
 # Step-1
 
 # TODO: replace ${PROJECT_ID} with your value below.

@@ -1,0 +1,46 @@
+name: Infra Pipeline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "plan | apply | destroy"
+        required: true
+        default: "plan"
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+
+jobs:
+
+  # 🔹 PR → PLAN ONLY (GitOps style)
+  pr-plan:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/templates/terraform.yml
+    with:
+      working_dir: ./gcp-infra
+      project_id: ${{ env.PROJECT_ID }}
+      action: plan
+
+  # 🔹 MAIN → APPLY (auto or controlled)
+  apply:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: prod   # 🔥 THIS enables approval
+    uses: ./.github/templates/terraform.yml
+    with:
+      working_dir: ./gcp-infra
+      project_id: ${{ env.PROJECT_ID }}
+      action: apply
+
+  # 🔹 MANUAL CONTROL (you decide)
+  manual:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/templates/terraform.yml
+    with:
+      working_dir: ./gcp-infra
+      project_id: ${{ env.PROJECT_ID }}
+      action: ${{ github.event.inputs.action }}
