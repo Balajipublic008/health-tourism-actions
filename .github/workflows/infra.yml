@@ -12,8 +12,6 @@ on:
         required: true
         default: "plan"
 
-runs-on: ubuntu-latest
-
 permissions:
   id-token: write
   contents: read
@@ -23,7 +21,7 @@ jobs:
   # 🔹 PR → PLAN ONLY
   pr-plan:
     if: github.event_name == 'pull_request'
-    uses: ./.github/workflows/templates/terraform.yml
+    uses: ./templates/terraform.yml  # E:\git\health-tourism-actions\.github\workflows\templates\terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
@@ -33,7 +31,7 @@ jobs:
   apply:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: prod
-    uses: ./.github/workflows/templates/terraform.yml
+    uses: ./templates/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
@@ -42,7 +40,7 @@ jobs:
   # 🔹 MANUAL CONTROL (plan/apply/destroy)
   manual:
     if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/templates/terraform.yml
+    uses: ./templates/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
