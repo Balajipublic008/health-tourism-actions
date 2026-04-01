@@ -57,12 +57,11 @@ jobs:
 
       - name: Terraform Plan
         if: inputs.action == 'plan' || inputs.action == 'apply'
-        run: terraform plan -var="project_id=${{ inputs.project_id }}"
+        run: terraform plan -var="project_id='${{ inputs.project_id }}'"
 
       - name: Terraform Apply
         if: inputs.action == 'apply'
-        run: terraform apply -auto-approve -var="project_id=${{ inputs.project_id }}"
-
+        run: terraform apply -auto-approve -var="project_id='${{ inputs.project_id }}'"
       - name: Terraform Destroy
         if: inputs.action == 'destroy'
-        run: terraform destroy -auto-approve -var="project_id=${{ inputs.project_id }}"
+        run: terraform destroy -auto-approve -var="project_id='${{ inputs.project_id }}'"
