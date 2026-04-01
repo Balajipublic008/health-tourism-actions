@@ -23,7 +23,7 @@ jobs:
   # 🔹 PR → PLAN ONLY
   pr-plan:
     if: github.event_name == 'pull_request'
-    uses: ./.github/templates/terraform.yml
+    uses: ./.github/workflows/templates/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
@@ -33,7 +33,7 @@ jobs:
   apply:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: prod
-    uses: ./.github/templates/terraform.yml
+    uses: ./.github/workflows/templates/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
@@ -42,7 +42,7 @@ jobs:
   # 🔹 MANUAL CONTROL (plan/apply/destroy)
   manual:
     if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/templates/terraform.yml
+    uses: ./.github/workflows/templates/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
