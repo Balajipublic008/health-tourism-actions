@@ -16,7 +16,8 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-
+    
+    # Permissions must be redefined in the job if needed for OIDC
     permissions:
       id-token: write
       contents: read
@@ -29,21 +30,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🔐 Auth only when NOT PR
+      # 🔐 Auth only when NOT PR (assuming PRs don't have secrets access)
       - name: Authenticate to GCP
         if: github.event_name != 'pull_request'
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@v2 # Updated to v2+ for stability
         with:
           project_id: ${{ inputs.project_id }}
           workload_identity_provider: projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions
           service_account: medical@${{ inputs.project_id }}.iam.gserviceaccount.com
       
-      - name: Debug Inputs
-        run: |
-          echo "DIR=${{ inputs.working_dir }}"
-          echo "PROJECT=${{ inputs.project_id }}"
-          echo "ACTION=${{ inputs.action }}"
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 

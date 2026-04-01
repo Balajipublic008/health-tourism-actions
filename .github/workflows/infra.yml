@@ -11,17 +11,21 @@ on:
         description: "plan | apply | destroy"
         required: true
         default: "plan"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-
   # 🔹 PR → PLAN ONLY
   pr-plan:
     if: github.event_name == 'pull_request'
-    uses: ./templates/terraform.yml  # E:\git\health-tourism-actions\.github\workflows\templates\terraform.yml
+    uses: ./.github/workflows/templates/terraform.yaml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
@@ -31,7 +35,7 @@ jobs:
   apply:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: prod
-    uses: ./templates/terraform.yml
+    uses: ./.github/workflows/templates/terraform.yaml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
@@ -40,8 +44,8 @@ jobs:
   # 🔹 MANUAL CONTROL (plan/apply/destroy)
   manual:
     if: github.event_name == 'workflow_dispatch'
-    uses: ./templates/terraform.yml
+    uses: ./.github/workflows/templates/terraform.yaml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
-      action: ${{ github.event.inputs.action }}
+      action: ${{ inputs.action }}
