@@ -2,6 +2,7 @@ name: Terraform Runner
 
 on:
   workflow_call:
+
     inputs:
       working_dir:
         required: true
@@ -12,7 +13,7 @@ on:
       action:
         required: true
         type: string
-
+  
 jobs:
   terraform:
     runs-on: ubuntu-latest
