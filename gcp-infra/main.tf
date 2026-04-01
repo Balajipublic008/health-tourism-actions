@@ -10,11 +10,16 @@ terraform {
   }
 }
 
+provider "google" {
+   project = "${{ vars.GCP_PROJECT_ID }}"
+   region  = var.region
+}
+
 # Replace with your GCP Project ID
 variable "project_id" {
-  description = "The GCP Project ID"
-  type        = string
-  default     = "project-b0bf8b45-36f1-4568-966"
+    description = "The GCP Project ID"
+    type        = string
+    default     = "project-b0bf8b45-36f1-4568-966"
 }
 
 # Free tier eligible regions: us-west1, us-central1, us-east1
@@ -22,11 +27,6 @@ variable "region" {
   description = "The GCP region"
   type        = string
   default     = "us-central1"
-}
-
-provider "google" {
-   project = var.project_id
-   region  = var.region
 }
 
 # 1. VPC Network
