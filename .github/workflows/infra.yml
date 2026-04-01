@@ -12,12 +12,12 @@ on:
         required: true
         default: "plan"
 
-permissions:
+  permissions:
     id-token: write
     contents: read
 
-env:
-  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  env:
+   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
 
 jobs:
 
