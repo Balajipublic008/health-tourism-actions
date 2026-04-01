@@ -11,46 +11,57 @@ on:
         type: string
       action:
         required: true
-        type: string      # plan | apply | destroy
-
-permissions:
-      id-token: write
-      contents: read
+        type: string
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
 
     defaults:
       run:
         working-directory: ${{ inputs.working_dir }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Auth GCP
+      # 🔐 Auth only when NOT PR
+      - name: Authenticate to GCP
+        if: github.event_name != 'pull_request'
         uses: google-github-actions/auth@v3
         with:
           project_id: ${{ inputs.project_id }}
           workload_identity_provider: projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions
           service_account: medical@${{ inputs.project_id }}.iam.gserviceaccount.com
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - name: Init
+      # ⚠️ PR → disable backend (no auth)
+      - name: Terraform Init (PR)
+        if: github.event_name == 'pull_request'
+        run: terraform init -backend=false
+
+      # ✅ Normal init
+      - name: Terraform Init
+        if: github.event_name != 'pull_request'
         run: terraform init
 
-      - name: Validate
+      - name: Terraform Validate
         run: terraform validate
 
-      - name: Plan
+      - name: Terraform Plan
         if: inputs.action == 'plan' || inputs.action == 'apply'
         run: terraform plan -var="project_id=${{ inputs.project_id }}"
 
-      - name: Apply
+      - name: Terraform Apply
         if: inputs.action == 'apply'
         run: terraform apply -auto-approve -var="project_id=${{ inputs.project_id }}"
 
-      - name: Destroy
+      - name: Terraform Destroy
         if: inputs.action == 'destroy'
         run: terraform destroy -auto-approve -var="project_id=${{ inputs.project_id }}"
