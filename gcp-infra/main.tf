@@ -25,8 +25,8 @@ variable "region" {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  # project = var.project_id
+   region  = var.region
 }
 
 # 1. VPC Network
