@@ -12,10 +12,7 @@ on:
         required: true
         default: "plan"
         type: choice
-        options:
-          - plan
-          - apply
-          - destroy
+        options: [plan, apply, destroy]
 
 permissions:
   id-token: write
@@ -31,17 +28,21 @@ jobs:
       project_id: ${{ vars.GCP_PROJECT_ID }}
       action: plan
 
-  # 🔹 MAIN → APPLY (with approval via environment)
+  # 🔹 MAIN → APPLY
+  # NOTE: Environment must be defined INSIDE the called workflow or 
+  # handled differently, as 'environment' and 'uses' (workflow) can conflict 
+  # if not structured specifically.
   apply:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: prod
     uses: ./.github/workflows/templates/terraform.yaml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
       action: apply
+    # To use environments with reusable workflows, the 'environment' 
+    # property is usually placed inside the JOB within the template file.
 
-  # 🔹 MANUAL CONTROL (plan/apply/destroy)
+  # 🔹 MANUAL CONTROL
   manual:
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/templates/terraform.yaml
