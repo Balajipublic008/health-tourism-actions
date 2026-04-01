@@ -11,7 +11,7 @@ terraform {
 }
 
 provider "google" {
-   project = "${{ vars.GCP_PROJECT_ID }}"
+   project = "project-b0bf8b45-36f1-4568-966"
    region  = var.region
 }
 
