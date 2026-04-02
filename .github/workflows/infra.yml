@@ -1,52 +1,53 @@
 name: Infra Pipeline
 
 on:
-  #pull_request:
+  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
     inputs:
+      env:
+        description: "Select Environment"
+        required: true
+        default: "dev"
+        type: choice
+        options: [dev, qa, prod]
       action:
-        description: "plan | apply | destroy"
+        description: "Terraform Action"
         required: true
         default: "plan"
         type: choice
         options: [plan, apply, destroy]
 
-environment:
-  name: dev
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  # 🔹 PR → PLAN ONLY
+  # 1. Automatic Plan for PRs (Targeting DEV)
   pr-plan:
     if: github.event_name == 'pull_request'
+    environment: dev 
     uses: ./.github/workflows/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
       action: plan
 
-  # 🔹 MAIN → APPLY
-  # NOTE: Environment must be defined INSIDE the called workflow or 
-  # handled differently, as 'environment' and 'uses' (workflow) can conflict 
-  # if not structured specifically.
-  apply:
+  # 2. Automatic Apply for Main (Targeting PROD)
+  deploy-prod:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: prod
     uses: ./.github/workflows/terraform.yml
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
       action: apply
-    # To use environments with reusable workflows, the 'environment' 
-    # property is usually placed inside the JOB within the template file.
 
-  # 🔹 MANUAL CONTROL
+  # 3. Manual Control (Any Env / Any Action)
   manual:
     if: github.event_name == 'workflow_dispatch'
+    environment: ${{ inputs.env }} # 👈 DYNAMIC: Maps to your chosen option
     uses: ./.github/workflows/terraform.yml
     with:
       working_dir: ./gcp-infra

@@ -1,11 +1,7 @@
 name: Terraform Runner
 
 on:
-  push:
-    branches:
-      - main
   workflow_call:
-
     inputs:
       working_dir:
         required: true
@@ -16,12 +12,16 @@ on:
       action:
         required: true
         type: string
+      # Added for better reusability
+      wif_provider:
+        required: false
+        type: string
+        default: "projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions"
   
 jobs:
   terraform:
     runs-on: ubuntu-latest
     
-    # Permissions must be redefined in the job if needed for OIDC
     permissions:
       id-token: write
       contents: read
@@ -34,45 +34,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🔐 Auth only when NOT PR (assuming PRs don't have secrets access)
       - name: Authenticate to GCP
         if: github.event_name != 'pull_request'
-        uses: google-github-actions/auth@v2 # Updated to v2+ for stability
+        uses: google-github-actions/auth@v2
         with:
           project_id: ${{ inputs.project_id }}
-          workload_identity_provider: projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions
+          workload_identity_provider: ${{ inputs.wif_provider }}
           service_account: medical@${{ inputs.project_id }}.iam.gserviceaccount.com
       
-      - name: Test Permissions
-        run: |
-          # This verifies if the authenticated account can list the project details
-          gcloud projects describe ${{ inputs.project_id }}
-          # This verifies if the account can list networks in the project
-          gcloud compute networks list --project ${{ inputs.project_id }}
-          
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # ⚠️ PR → disable backend (no auth)
-      - name: Terraform Init (PR)
-        if: github.event_name == 'pull_request'
-        run: terraform init -backend=false
-
-      # ✅ Normal init
       - name: Terraform Init
-        if: github.event_name != 'pull_request'
-        run: terraform init
+        # Using a ternary-style logic or separate steps is fine
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            terraform init -backend=false
+          else
+            terraform init
+          fi
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
         if: inputs.action == 'plan' || inputs.action == 'apply'
-        run: terraform plan -var="project_id='${{ inputs.project_id }}'"
+        run: terraform plan -var="project_id=${{ inputs.project_id }}"
 
       - name: Terraform Apply
         if: inputs.action == 'apply'
-        run: terraform apply -auto-approve -var="project_id='${{ inputs.project_id }}'"
+        run: terraform apply -auto-approve -var="project_id=${{ inputs.project_id }}"
+
       - name: Terraform Destroy
         if: inputs.action == 'destroy'
-        run: terraform destroy -auto-approve -var="project_id='${{ inputs.project_id }}'"
+        run: terraform destroy -auto-approve -var="project_id=${{ inputs.project_id }}"
