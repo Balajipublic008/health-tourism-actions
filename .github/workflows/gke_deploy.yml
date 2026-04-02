@@ -6,17 +6,16 @@
       #    - main
       workflow_dispatch:
     
-      permissions:
-        id-token: write
-        contents: read
-  
-      env:
-        PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-        GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
-        GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
-        IMAGE: medical-tourism-app
-        TARGET_COLOR: green
-        ACTIVE_COLOR: blue
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
+      GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
+      IMAGE: medical-tourism-app
+      TARGET_COLOR: green
+      ACTIVE_COLOR: blue
 
     jobs:
       terraform-deploy:
