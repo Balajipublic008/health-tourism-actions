@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   manual-deploy:
+    
     # 1. Access the 'dev' environment for variables
     environment: dev
     # 2. CALL the reusable workflow (NO runs-on, NO steps here!)
