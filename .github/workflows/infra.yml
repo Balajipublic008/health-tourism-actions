@@ -20,7 +20,7 @@ jobs:
     # 1. Access the 'dev' environment for variables
     environment: dev
     # 2. CALL the reusable workflow (NO runs-on, NO steps here!) 
-    uses: ./.github/workflows/terraform.yml
+    uses: "./.github/workflows/terraform.yml"
     with:
       working_dir: ./gcp-infra
       project_id: ${{ vars.GCP_PROJECT_ID }}
