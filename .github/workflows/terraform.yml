@@ -21,7 +21,7 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    environment: dev # Added environment here so it can access the 'dev' environment variables
+    environment: dev          # Added environment here so it can access the 'dev' environment variables
     
     permissions:
       id-token: write

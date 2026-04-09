@@ -1,112 +1,113 @@
-    name: Build and Deploy to GKE
+name: Build and Deploy to GKE
 
-    on:
-      push:
-      #  branches:
-      #    - main
-      workflow_dispatch:
-    
-    permissions:
-      id-token: write
-      contents: read
+on:
+  push:
+  #  branches:
+  #    - main
+  workflow_dispatch:
 
-    env:
-      GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
-      GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
-      IMAGE: medical-tourism-app
-      TARGET_COLOR: green
-      ACTIVE_COLOR: blue
+permissions:
+  id-token: write
+  contents: read
 
-    jobs:
-      terraform-deploy:
-        name: Deploy Infrastructure with Terraform
-        runs-on: ubuntu-latest
-        environment: dev
-        defaults:
-          run:
-            working-directory: ./gcp-infra
+env:
+  GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
+  GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
+  IMAGE: medical-tourism-app
+  TARGET_COLOR: green
+  ACTIVE_COLOR: blue
+  PROJECT_ID: project-b0bf8b45-36f1-4568-966
 
-        steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
+jobs:
+  terraform-deploy:
+    name: Deploy Infrastructure with Terraform
+    runs-on: ubuntu-latest
+    environment: dev
+    defaults:
+      run:
+        working-directory: ./gcp-infra
 
-        - id: 'auth'
-          name: 'Authenticate to Google Cloud'
-          uses: 'google-github-actions/auth@v2'
-          with:
-            project_id: ${{ vars.GCP_PROJECT_ID }}
-            workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        project_id: project-b0bf8b45-36f1-4568-966
+        workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
+        service_account: medical@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com
 
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v3
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-        - name: Terraform Init
-          run: terraform init
+    - name: Terraform Init
+      run: terraform init
 
-        - name: Terraform Apply
-          run: terraform apply -auto-approve -var="project_id=${{ vars.GCP_PROJECT_ID }}"
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var="project_id=project-b0bf8b45-36f1-4568-966"
 
-      setup-build-publish-deploy:
-        name: Setup, Build, Publish, and Deploy
-        needs: terraform-deploy
-        runs-on: ubuntu-latest # This uses the free GitHub-hosted runners
-        environment: dev
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    needs: terraform-deploy
+    runs-on: ubuntu-latest # This uses the free GitHub-hosted runners
+    environment: dev
 
-        steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-        # Authenticate to Google Cloud using a Service Account JSON key stored in GitHub Secrets
-        - id: 'auth'
-          name: 'Authenticate to Google Cloud'
-          uses: 'google-github-actions/auth@v2'
-          with:
-            project_id: ${{ vars.GCP_PROJECT_ID }}
-            workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        project_id: project-b0bf8b45-36f1-4568-966
+        workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
+        service_account: medical@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com
 
-        - name: Set up Cloud SDK
-          uses: google-github-actions/setup-gcloud@v2
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
 
-        - name: Configure Docker for GCR
-          run: |-
-            gcloud auth configure-docker gcr.io
+    - name: Configure Docker for GCR
+      run: |-
+        gcloud auth configure-docker gcr.io
 
-        - name: Build Docker Image
-          run: |-
-            docker build \
-              --tag "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
-              --tag "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR" \
-              .
+    - name: Build Docker Image
+      run: |-
+        docker build \
+          --tag "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
+          --tag "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR" \
+          .
 
-        - name: Publish Docker Image to GCR
-          run: |-
-            docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
-            docker push "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR"
+    - name: Publish Docker Image to GCR
+      run: |-
+        docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
+        docker push "gcr.io/$PROJECT_ID/$IMAGE:$TARGET_COLOR"
 
-        - name: Set up GKE credentials
-          uses: google-github-actions/get-gke-credentials@v2
-          with:
-            cluster_name: ${{ env.GKE_CLUSTER }}
-            location: ${{ env.GKE_ZONE }}
+    - name: Set up GKE credentials
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
 
-        - name: Deploy Target Color (Green) to GKE
-          run: |-
-            # Replace the image placeholder in the manifest with the newly built image
-            sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/blue-green/deployment-$TARGET_COLOR.yaml
+    - name: Deploy Target Color (Green) to GKE
+      run: |-
+        # Replace the image placeholder in the manifest with the newly built image
+        sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/blue-green/deployment-$TARGET_COLOR.yaml
 
-            # Apply the deployment
-            kubectl apply -f k8s/blue-green/deployment-$TARGET_COLOR.yaml
+        # Apply the deployment
+        kubectl apply -f k8s/blue-green/deployment-$TARGET_COLOR.yaml
 
-            # Wait for the rollout to complete successfully
-            kubectl rollout status deployment/medical-tourism-$TARGET_COLOR
+        # Wait for the rollout to complete successfully
+        kubectl rollout status deployment/medical-tourism-$TARGET_COLOR
 
-        - name: Switch Traffic to Target Color
-          run: |-
-            # Patch the service selector to route traffic to the new Green deployment
-            kubectl patch service medical-tourism-service -p "{\"spec\":{\"selector\":{\"color\":\"$TARGET_COLOR\"}}}"
+    - name: Switch Traffic to Target Color
+      run: |-
+        # Patch the service selector to route traffic to the new Green deployment
+        kubectl patch service medical-tourism-service -p "{\"spec\":{\"selector\":{\"color\":\"$TARGET_COLOR\"}}}"
 
-        - name: Scale down Old Color (Blue)
-          run: |-
-            # Scale down the old deployment to 0 to save resources on the GCP Free Tier
-            kubectl scale deployment medical-tourism-$ACTIVE_COLOR --replicas=0
+    - name: Scale down Old Color (Blue)
+      run: |-
+        # Scale down the old deployment to 0 to save resources on the GCP Free Tier
+        kubectl scale deployment medical-tourism-$ACTIVE_COLOR --replicas=0
