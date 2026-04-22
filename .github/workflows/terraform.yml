@@ -41,7 +41,7 @@ jobs:
         with:
           project_id: ${{ inputs.project_id }}
           workload_identity_provider: ${{ inputs.wif_provider }}
-          service_account: medical@${{ inputs.project_id }}.iam.gserviceaccount.com
+          service_account: healt-tour@${{ inputs.project_id }}.iam.gserviceaccount.com
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
