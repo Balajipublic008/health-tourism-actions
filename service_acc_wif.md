@@ -69,10 +69,10 @@ Created workload identity pool provider [health-tour-india].
 # projects/223480410234/locations/global/workloadIdentityPools/health-tour-github-pool is the full pool id, such as
 # "projects/123456789/locations/global/workloadIdentityPools/github".
 
-gcloud iam service-accounts add-iam-policy-binding "healt-tour@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com" \
-  --project="project-b0bf8b45-36f1-4568-966" \
-  --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/223480410234/locations/global/workloadIdentityPools/health-tour-github-pool/attribute.repository/Balajipublic008/health-tourism-actions"
+    gcloud iam service-accounts add-iam-policy-binding "healt-tour@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com" \
+    --project="project-b0bf8b45-36f1-4568-966" \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="principalSet://iam.googleapis.com/projects/223480410234/locations/global/workloadIdentityPools/health-tour-github-pool/attribute.repository/Balajipublic008/health-tourism-actions"
 
 Result : 
 Updated IAM policy for serviceAccount [healt-tour@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com].
@@ -89,10 +89,10 @@ Extract the Workload Identity Provider resource name:
 
 # TODO: replace project-b0bf8b45-36f1-4568-966 with your value below.
 
-gcloud iam workload-identity-pools providers describe "my-repo" \
+gcloud iam workload-identity-pools providers describe "Balajipublic008" \
   --project="project-b0bf8b45-36f1-4568-966" \
   --location="global" \
-  --workload-identity-pool="github" \
+  --workload-identity-pool="health-tour-github-pool" \
   --format="value(name)"
 
 Result : projects/223480410234/locations/global/workloadIdentityPools/github/providers/my-repo
@@ -103,7 +103,7 @@ Use this value as the workload_identity_provider value in the GitHub Actions YAM
   with:
     service_account: '...' # my-service-account@my-project.iam.gserviceaccount.com
     workload_identity_provider: '...' # "projects/123456789/locations/global/workloadIdentityPools/github/providers/my-repo"
-    
+
 7. As needed, grant the Google Cloud Service Account permissions to access Google Cloud resources. This step varies by use case. The following example shows granting access to a secret in Google Secret Manager.
 
 # TODO: replace project-b0bf8b45-36f1-4568-966 with your value below.

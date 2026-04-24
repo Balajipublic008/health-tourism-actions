@@ -12,25 +12,15 @@ on:
       action:
         required: true
         type: string
-      # Added for better reusability
-      wif_provider:
-        required: false
-        type: string
-        default: "projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions"
+    secrets:
+      gcp_credentials:
+        required: true
   
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    environment: dev          # Added environment here so it can access the 'dev' environment variables
+    environment: dev # Added environment here so it can access the 'dev' environment variables
     
-    permissions:
-      id-token: write
-      contents: read
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_dir }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,9 +29,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: google-github-actions/auth@v2
         with:
-          project_id: ${{ inputs.project_id }}
-          workload_identity_provider: ${{ inputs.wif_provider }}
-          service_account: healt-tour@${{ inputs.project_id }}.iam.gserviceaccount.com
+          credentials_json: ${{ secrets.gcp_credentials }}
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

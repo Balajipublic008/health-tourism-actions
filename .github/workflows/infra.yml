@@ -10,7 +10,6 @@ on:
         type: choice
         options: [plan, apply, destroy]
 
-
 permissions:
   id-token: write
   contents: read
@@ -22,5 +21,7 @@ jobs:
     uses: ./.github/workflows/terraform.yml
     with:
       working_dir: ./gcp-infra
-      project_id: "project-b0bf8b45-36f1-4568-966"
+      project_id: project-b0bf8b45-36f1-4568-966
       action: ${{ inputs.action }}
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CREDENTIALS }}

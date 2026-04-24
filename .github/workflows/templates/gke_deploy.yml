@@ -35,9 +35,7 @@ jobs:
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v2'
       with:
-        project_id: project-b0bf8b45-36f1-4568-966
-        workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
-        service_account: medical@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -62,9 +60,7 @@ jobs:
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v2'
       with:
-        project_id: project-b0bf8b45-36f1-4568-966
-        workload_identity_provider: 'projects/223480410234/locations/global/workloadIdentityPools/github/providers/health-tourism-actions'
-        service_account: medical@project-b0bf8b45-36f1-4568-966.iam.gserviceaccount.com
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
