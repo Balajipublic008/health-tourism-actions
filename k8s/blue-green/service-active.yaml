@@ -2,6 +2,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: medical-tourism-service
+  # Note: A Kubernetes Service LoadBalancer can only select pods in the SAME namespace it is created in.
+  # To manually switch traffic between blue and green, you must apply this service manifest to the target namespace:
+  # e.g., `kubectl apply -f service-active.yaml -n green`
+  # And verify the selector below matches the color you want in that namespace.
   labels:
     app: medical-tourism
 spec:
