@@ -48,7 +48,7 @@ jobs:
 
   build-and-publish:
     name: Setup, Build, Publish
-    needs: terraform-deploy
+   # needs: terraform-deploy
     runs-on: ubuntu-latest
     environment: dev
 
