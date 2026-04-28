@@ -1,9 +1,11 @@
-name: Build and Deploy to GKE
+name: 2. GKE Blue Deploy
 
 on:
   push:
-  #  branches:
-  #    - main
+    branches:
+      - main
+    paths-ignore:
+      - 'gcp-infra/**'
   workflow_dispatch:
 
 permissions:
@@ -11,44 +13,14 @@ permissions:
   contents: read
 
 env:
-  GKE_CLUSTER: med-tour-cluster           # Matches the cluster name in main.tf
-  GKE_ZONE: us-central1-a                 # Matches the zone in main.tf
+  GKE_CLUSTER: med-tour-cluster
+  GKE_ZONE: us-central1-a
   IMAGE: medical-tourism-app
-  TARGET_COLOR: green
-  ACTIVE_COLOR: blue
   PROJECT_ID: project-b0bf8b45-36f1-4568-966
 
 jobs:
-  terraform-deploy:
-    name: Deploy Infrastructure with Terraform
-    runs-on: ubuntu-latest
-    environment: dev
-    defaults:
-      run:
-        working-directory: ./gcp-infra
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v2'
-      with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-
-    - name: Terraform Init
-      run: terraform init
-
-    - name: Terraform Apply
-      run: terraform apply -auto-approve -var="project_id=project-b0bf8b45-36f1-4568-966"
-
   build-and-publish:
     name: Setup, Build, Publish
-   # needs: terraform-deploy
     runs-on: ubuntu-latest
     environment: dev
 
@@ -72,12 +44,12 @@ jobs:
     - name: Build Docker Image
       run: |-
         docker build \
-          --tag "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
+          --tag "gcr.io/$PROJECT_ID/$IMAGE:${{ github.sha }}" \
           .
 
     - name: Publish Docker Image to GCR
       run: |-
-        docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
+        docker push "gcr.io/$PROJECT_ID/$IMAGE:${{ github.sha }}"
 
   deploy-blue:
     name: Deploy to Blue Environment
@@ -106,7 +78,7 @@ jobs:
         kubectl create namespace blue --dry-run=client -o yaml | kubectl apply -f -
         
         # Replace the image placeholder in the manifest with the newly built image
-        sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/blue-green/deployment-blue.yaml
+        sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
         
         # Apply the deployment to blue namespace
         kubectl apply -f k8s/blue-green/deployment-blue.yaml -n blue
@@ -142,40 +114,3 @@ jobs:
         POD_NAME=$(kubectl get pods -n blue -l color=blue -o jsonpath='{.items[0].metadata.name}')
         kubectl exec -n blue $POD_NAME -- curl -s http://localhost:3000/api/health
         echo -e "\nBlue environment is healthy and successfully tested!"
-
-  deploy-green:
-    name: Deploy to Green Environment
-    needs: test-blue
-    runs-on: ubuntu-latest
-    environment: dev
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v2'
-      with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-    - name: Set up GKE credentials
-      uses: google-github-actions/get-gke-credentials@v2
-      with:
-        cluster_name: ${{ env.GKE_CLUSTER }}
-        location: ${{ env.GKE_ZONE }}
-
-    - name: Deploy Green to GKE
-      run: |-
-        # Ensure green namespace exists
-        kubectl create namespace green --dry-run=client -o yaml | kubectl apply -f -
-        
-        # Replace the image placeholder in the manifest
-        sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/blue-green/deployment-green.yaml
-        
-        # Apply the deployment to green namespace
-        kubectl apply -f k8s/blue-green/deployment-green.yaml -n green
-        
-        # Wait for the rollout to complete
-        kubectl rollout status deployment/medical-tourism-green -n green --timeout=300s
-        
-        echo "Green deployment completed in 'green' namespace. Ready for manual traffic switch!"

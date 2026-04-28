@@ -1,0 +1,51 @@
+name: 1. GCP Infra Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'gcp-infra/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PROJECT_ID: project-b0bf8b45-36f1-4568-966
+
+jobs:
+  terraform-deploy:
+    name: Deploy Infrastructure with Terraform
+    runs-on: ubuntu-latest
+    environment: dev
+    defaults:
+      run:
+        working-directory: ./gcp-infra
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Create Terraform State Bucket (if not exists)
+      run: |
+        gcloud storage buckets describe gs://${{ env.PROJECT_ID }}-tfstate || gcloud storage buckets create gs://${{ env.PROJECT_ID }}-tfstate --project=${{ env.PROJECT_ID }} --location=us-central1
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      run: terraform init -backend-config="bucket=${{ env.PROJECT_ID }}-tfstate"
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var="project_id=${{ env.PROJECT_ID }}"

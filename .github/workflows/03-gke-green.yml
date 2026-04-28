@@ -1,0 +1,55 @@
+name: 3. GKE Green Deploy (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag (github SHA) to deploy to GREEN'
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  GKE_CLUSTER: med-tour-cluster
+  GKE_ZONE: us-central1-a
+  IMAGE: medical-tourism-app
+  PROJECT_ID: project-b0bf8b45-36f1-4568-966
+
+jobs:
+  deploy-green:
+    name: Deploy to Green Environment
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    - name: Set up GKE credentials
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
+
+    - name: Deploy Green to GKE
+      run: |-
+        # Ensure green namespace exists
+        kubectl create namespace green --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Replace the image placeholder in the manifest
+        sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:${{ github.event.inputs.image_tag }}|g" k8s/blue-green/deployment-green.yaml
+        
+        # Apply the deployment to green namespace
+        kubectl apply -f k8s/blue-green/deployment-green.yaml -n green
+        
+        # Wait for the rollout to complete
+        kubectl rollout status deployment/medical-tourism-green -n green --timeout=300s
+        
+        echo "Green deployment completed in 'green' namespace. Ready for manual traffic switch!"
