@@ -78,7 +78,7 @@ jobs:
         kubectl create namespace blue --dry-run=client -o yaml | kubectl apply -f -
         
         # Replace the image placeholder in the manifest with the newly built image
-        sed -i "s|image: .*|image: gcr.io/$PROJECT_ID/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
+        sed -i "s|image: .*|image: gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
         
         # Apply the deployment to blue namespace
         kubectl apply -f k8s/blue-green/deployment-blue.yaml -n blue
