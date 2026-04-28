@@ -8,6 +8,11 @@ terraform {
       version = "~> 7.25.0"
     }
   }
+  
+  backend "gcs" {
+    bucket = "project-b0bf8b45-36f1-4568-966-tfstate"
+    prefix  = "terraform/state"
+  }
 }
 
 provider "google" {
@@ -73,7 +78,7 @@ resource "google_container_node_pool" "primary_nodes" {
   node_count = 2 # Keep it small for free tier
 
   node_config {
-    machine_type = "e2-micro" # GCP Free Tier eligible
+    machine_type = "e2-medium" # GCP Free Tier eligible
     disk_size_gb = 30         # Standard persistent disk (30GB is free tier limit)
     disk_type    = "pd-standard"
 
