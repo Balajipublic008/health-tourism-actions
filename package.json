@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --platform=node --target=node20 --outfile=dist/server.cjs --bundle --format=cjs",
+    "build": "vite build && esbuild server.ts --platform=node --target=node20 --outfile=dist/server.esm --bundle --format=cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
