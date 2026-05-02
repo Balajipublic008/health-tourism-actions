@@ -83,8 +83,8 @@ jobs:
         # Apply the deployment to blue namespace
         kubectl apply -f k8s/blue-green/deployment-blue.yaml -n blue
 
-  # # Wait for the rollout to complete successfully
-  # kubectl rollout status deployment/medical-tourism-blue -n blue --timeout=300s  
+        # Wait for the rollout to complete successfully
+        kubectl rollout status deployment/medical-tourism-blue -n blue --timeout=300s  
 
   test-blue:
     name: Test Blue Environment
