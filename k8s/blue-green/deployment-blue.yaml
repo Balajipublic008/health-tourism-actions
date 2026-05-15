@@ -10,17 +10,15 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: medical-tourism
-      color: blue
+      app: medical-tourism-blue
   template:
     metadata:
       labels:
-        app: medical-tourism
+        app: medical-tourism-blue
         color: blue
     spec:
       containers:
       - name: medical-tourism-web
-        # This will be replaced by Azure DevOps during deployment
         image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:blue
         ports:
         - containerPort: 3000
@@ -31,9 +29,19 @@ spec:
           limits:
             cpu: "200m"
             memory: "256Mi"
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /api/health
             port: 3000
           initialDelaySeconds: 30
           periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
