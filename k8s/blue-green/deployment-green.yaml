@@ -21,7 +21,7 @@ spec:
       containers:
       - name: medical-tourism-web
         # This will be replaced by Azure DevOps during deployment
-        image: gcr.io/YOUR_PROJECT_ID/medical-tourism-app:green
+        image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:green
         ports:
         - containerPort: 3000
         resources:
@@ -37,3 +37,4 @@ spec:
             port: 3000
           initialDelaySeconds: 30
           periodSeconds: 15
+
