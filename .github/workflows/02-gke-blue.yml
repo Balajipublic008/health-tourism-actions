@@ -74,22 +74,24 @@ jobs:
 
     - name: Deploy Blue to GKE
       run: |-
-         kubectl create namespace blue --dry-run=client -o yaml | kubectl apply -f -
-         
-         # Use environment variable to set image
-         kubectl set image deployment/medical-tourism-blue \
-           medical-tourism-web=gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }} \
-           -n blue --record || kubectl apply -f k8s/blue-green/deployment-blue.yaml -n blue
-         
-         kubectl rollout status deployment/medical-tourism-blue -n blue --timeout=600s
-         
-         if [ $? -ne 0 ]; then
-           echo "Rollout failed. Debugging information:"
-           kubectl describe deployment medical-tourism-blue -n blue
-           kubectl get pods -n blue -l app=medical-tourism-blue -o wide
-           kubectl logs -n blue -l app=medical-tourism-blue --tail=100 --all-containers=true
-           exit 1
-         fi
+        # Ensure blue namespace exists
+        kubectl create namespace blue --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Replace the image placeholder with the full GCR path
+        sed -i "s|image: medical-tourism-app:latest|image: gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
+        
+        # Apply the deployment to blue namespace
+        kubectl apply -f k8s/blue-green/deployment-blue.yaml -n blue
+        
+        # Wait for the rollout to complete
+        if ! kubectl rollout status deployment/medical-tourism-blue -n blue --timeout=600s; then
+          echo "Rollout failed. Debugging information:"
+          kubectl describe deployment medical-tourism-blue -n blue
+          kubectl get pods -n blue -l app=medical-tourism-blue -o wide
+          kubectl describe pods -n blue -l app=medical-tourism-blue
+          kubectl logs -n blue -l app=medical-tourism-blue --tail=100 --all-containers=true
+          exit 1
+        fi
   test-blue:
     name: Test Blue Environment
     needs: deploy-blue
