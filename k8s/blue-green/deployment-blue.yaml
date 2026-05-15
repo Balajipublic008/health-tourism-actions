@@ -4,7 +4,7 @@ metadata:
   name: medical-tourism-blue
   namespace: blue
   labels:
-    app: medical-tourism
+    app: medical-tourism-blue
     color: blue
 spec:
   replicas: 2
