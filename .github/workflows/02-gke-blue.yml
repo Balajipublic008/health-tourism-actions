@@ -79,10 +79,13 @@ jobs:
 
         # Replace the image placeholder with the full GCR path
         sed -i "s|image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:blue|image: gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
-
-        # Apply the deployment to blue namespace
+        # Delete the old deployment if it exists
+        
+        kubectl delete deployment medical-tourism-blue -n blue --ignore-not-found=true
+        
+        # Apply the new deployment
         kubectl apply -f k8s/blue-green/deployment-blue.yaml -n blue
-
+        
         # Wait for the rollout to complete
         if ! kubectl rollout status deployment/medical-tourism-blue -n blue --timeout=600s; then
           echo "Rollout failed. Debugging information:"
@@ -92,6 +95,7 @@ jobs:
           kubectl logs -n blue -l app=medical-tourism-blue --tail=100 --all-containers=true
           exit 1
         fi
+        
   test-blue:
     name: Test Blue Environment
     needs: deploy-blue
