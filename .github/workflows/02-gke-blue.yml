@@ -79,7 +79,7 @@ jobs:
 
         # Replace the image placeholder with the full GCR path
         # sed -i "s|image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:blue|image: gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
-        sed -i "s|image: gcr.io/.*|image: gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE }}:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
+        sed -i "s|image: gcr.io/.*|image: gcr.io/project-b0bf8b45-36f1-4568-966/${{ env.IMAGE }}:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
 
         # Delete the old deployment if it exists           
         kubectl delete deployment medical-tourism-blue -n blue --ignore-not-found=true
