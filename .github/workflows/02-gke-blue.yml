@@ -78,9 +78,10 @@ jobs:
         kubectl create namespace blue --dry-run=client -o yaml | kubectl apply -f -
 
         # Replace the image placeholder with the full GCR path
-        sed -i "s|image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:blue|image: gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
-        # Delete the old deployment if it exists
-        
+        # sed -i "s|image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:blue|image: gcr.io/${{ env.PROJECT_ID }}/$IMAGE:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
+        sed -i "s|image: gcr.io/.*|image: gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE }}:${{ github.sha }}|g" k8s/blue-green/deployment-blue.yaml
+
+        # Delete the old deployment if it exists           
         kubectl delete deployment medical-tourism-blue -n blue --ignore-not-found=true
         
         # Apply the new deployment
