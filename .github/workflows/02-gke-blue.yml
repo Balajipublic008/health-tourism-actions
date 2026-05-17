@@ -92,11 +92,11 @@ jobs:
           kubectl logs -n blue -l app=medical-tourism-blue --tail=100 --all-containers=true
           exit 1
         fi
-        
-      env:
-        IMAGE: ${{ env.IMAGE }}
-        PROJECT_ID: ${{ env.PROJECT_ID }}
-        GITHUB_SHA: ${{ github.sha }}
+
+  env:
+    IMAGE: ${{ env.IMAGE }}
+    PROJECT_ID: ${{ env.PROJECT_ID }}
+    GITHUB_SHA: ${{ github.sha }}
         
   test-blue:
     name: Test Blue Environment
