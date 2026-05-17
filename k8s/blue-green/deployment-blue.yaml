@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: medical-tourism-web
-        image: gcr.io/${PROJECT_ID}/${IMAGE}:${GITHUB_SHA}
+        image: gcr.io/${{ env.PROJECT_ID }}/medical-tourism-app:blue
         ports:
         - containerPort: 3000
         resources:
