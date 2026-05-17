@@ -75,7 +75,7 @@ jobs:
         cluster_name: ${{ env.GKE_CLUSTER }}
         location: ${{ env.GKE_ZONE }}
 
-        - name: Deploy Blue to GKE
+    - name: Deploy Blue to GKE
       run: |-
         # Ensure blue namespace exists
         kubectl create namespace blue --dry-run=client -o yaml | kubectl apply -f -
