@@ -17,6 +17,9 @@ env:
   GKE_ZONE: us-central1-a
   IMAGE: medical-tourism-app
   PROJECT_ID: project-b0bf8b45-36f1-4568-966
+  IMAGE: ${{ env.IMAGE }}
+  PROJECT_ID: ${{ env.PROJECT_ID }}
+  GITHUB_SHA: ${{ github.sha }}
 
 jobs:
   build-and-publish:
@@ -92,11 +95,6 @@ jobs:
           kubectl logs -n blue -l app=medical-tourism-blue --tail=100 --all-containers=true
           exit 1
         fi
-
-  env:
-    IMAGE: ${{ env.IMAGE }}
-    PROJECT_ID: ${{ env.PROJECT_ID }}
-    GITHUB_SHA: ${{ github.sha }}
         
   test-blue:
     name: Test Blue Environment
