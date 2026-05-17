@@ -17,9 +17,6 @@ env:
   GKE_ZONE: us-central1-a
   IMAGE: medical-tourism-app
   PROJECT_ID: project-b0bf8b45-36f1-4568-966
-  IMAGE: ${{ env.IMAGE }}
-  PROJECT_ID: ${{ env.PROJECT_ID }}
-  GITHUB_SHA: ${{ github.sha }}
 
 jobs:
   build-and-publish:
