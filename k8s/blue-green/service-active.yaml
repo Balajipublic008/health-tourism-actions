@@ -3,10 +3,13 @@ kind: Service
 metadata:
   name: medical-tourism-service
   namespace: blue
+
 spec:
   type: LoadBalancer
+
   selector:
     app: medical-tourism-blue
+
   ports:
     - protocol: TCP
       port: 80
